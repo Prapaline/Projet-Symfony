@@ -1,0 +1,120 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Réserver le véhicule</h1>
+
+    <!-- Détails du véhicule -->
+    <div class="vehicle-card mb-4">
+        <div class="vehicle-image" style="background-image: url('{{ vehicule.image }}');"></div>
+        <div class="vehicle-details">
+            <div class="vehicle-title">{{ vehicule.marque }}</div>
+            <div>Immatriculation : {{ vehicule.immatriculation }}</div>
+        </div>
+    </div>
+
+     <!-- Affichage de la moyenne des notes -->
+    <div class="mb-3">
+        <strong>Moyenne des notes : </strong>
+        {% if averageRating > 0 %}
+            <span>{{ averageRating }} / 5</span>
+        {% else %}
+            <span>Aucune note disponible</span>
+        {% endif %}
+    </div>
+
+    <!-- Affichage des commentaires -->
+    <div class="comments-section">
+        <h4>Commentaires :</h4>
+        {% if comments is empty %}
+            <p>Aucun commentaire pour ce véhicule.</p>
+        {% else %}
+            <ul class="list-unstyled">
+                {% for comment in comments %}
+                    <li class="comment-item mb-3">
+<strong>{{ comment.reservations.users.email }}:</strong>
+                        <p>{{ comment.libelle }}</p>
+                        <small>Note: {{ comment.note }} / 5</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+
+    {% if commentForm %}
+        <h3>Ajouter un commentaire</h3>
+        {{ form_start(commentForm) }}
+            <div class="mb-3">
+                {{ form_row(commentForm.libelle) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(commentForm.note) }}
+            </div>
+            <button type="submit" class="btn btn-success">Soumettre le commentaire</button>
+        {{ form_end(commentForm) }}
+    {% endif %}
+
+
+    <!-- Messages Flash -->
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    <!-- Formulaire de réservation -->
+    {{ form_start(form) }}
+        <div class="mb-3">
+            {{ form_row(form.dateDebut) }}
+        </div>
+        <div class="mb-3">
+            {{ form_row(form.dateFin) }}
+        </div>
+        <div class="mb-3">
+            {{ form_row(form.prixTotal) }}
+        </div>
+        <button type="submit" class="btn btn-primary">Réserver</button>
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Fonction pour calculer le prix total
+        function updatePrixTotal() {
+            let dateDebut = document.querySelector("input[name='reservation[dateDebut]']").value;
+            let dateFin = document.querySelector("input[name='reservation[dateFin]']").value;
+
+            // Convertir les dates en objets Date
+            let dateDebutObj = new Date(dateDebut);
+            let dateFinObj = new Date(dateFin);
+
+            // Calculer la différence en jours
+            let timeDiff = dateFinObj - dateDebutObj;
+            let nbJours = timeDiff / (1000 * 3600 * 24);  // Conversion en jours
+
+            if (nbJours >= 0) {
+                // Calcul du prix total
+                let prixVehicule = {{ vehicule.prix }};
+                let prixTotal = prixVehicule * nbJours;
+
+                // Appliquer une réduction de 10% si nécessaire
+                if (prixTotal > 400) {
+                    prixTotal *= 0.9;
+                }
+
+                // Mettre à jour le champ prixTotal
+                document.querySelector("input[name='reservation[prixTotal]']").value = prixTotal.toFixed(2);
+            } else {
+                // Si la date de fin est avant la date de début, afficher un message d'erreur
+                alert('La date de fin doit être après la date de début.');
+                document.querySelector("input[name='reservation[prixTotal]']").value = '';  // Réinitialiser le prix
+            }
+        }
+
+        // Ajouter un écouteur d'événements pour mettre à jour le prix quand les dates changent
+        document.querySelector("input[name='reservation[dateDebut]']").addEventListener('change', updatePrixTotal);
+        document.querySelector("input[name='reservation[dateFin]']").addEventListener('change', updatePrixTotal);
+    </script>
+{% endblock %}

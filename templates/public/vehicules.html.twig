@@ -1,0 +1,107 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}
+    Nos Véhicules 
+{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Véhicules Disponibles</h1>
+
+    <!-- Barre de recherche -->
+    <div class="mb-4">
+        {{ form_start(searchForm, {'attr': {'class': 'row g-3'}}) }}
+        <div class="col-md-4">
+            {{ form_row(searchForm.marque) }}
+        </div>
+        <div class="col-md-4">
+            {{ form_row(searchForm.prixMax) }}
+        </div>
+        <div class="col-md-4">
+            {{ form_row(searchForm.disponible) }}
+        </div>
+        <div class="col-md-12 text-end">
+            {{ form_row(searchForm.rechercher) }}
+        </div>
+        {{ form_end(searchForm) }}
+    </div>
+
+    <!-- Liste des véhicules -->
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for vehicule in vehicules %}
+            <div class="col">
+                <div class="vehicle-card">
+                    <!-- Image -->
+                    <div class="vehicle-image" style="background-image: url('{{ vehicule.image }}');"></div>
+
+                    <!-- Détails -->
+                    <div class="vehicle-details">
+                        <div class="vehicle-title">{{ vehicule.marque }}</div>
+                        <div class="vehicle-price">{{ vehicule.prix | number_format(0, ',', ' ') }} €</div>
+                        <div class="vehicle-availability">
+                            {% if vehicule.disponible %}
+                                <span class="text-success">Disponible</span>
+                            {% else %}
+                                <span class="text-danger">Indisponible</span>
+                            {% endif %}
+                        </div>
+                        <button class="btn btn-outline-primary favoris-btn" data-id="{{ vehicule.id }}">
+                        {% if vehicule in app.user.favoris %}
+                            Retirer des favoris
+                        {% else %}
+                            Ajouter aux favoris
+                        {% endif %}
+                        </button>
+                        <div class="vehicle-reservations">
+                    Réservations : {{ vehicule.getReservationCount() }}
+                </div>
+                        {# Bouton "Réserver" uniquement visible si l'utilisateur est connecté #}
+                        {% if app.user %}
+                            <a href="{{ path('app_reservation_client', {'id': vehicule.id}) }}" class="btn btn-primary mt-2">Réserver</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <p class="text-center">Aucun véhicule trouvé.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .vehicle-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            height: 100%;
+        }
+        .vehicle-card:hover {
+            transform: scale(1.02);
+        }
+        .vehicle-image {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+        }
+        .vehicle-details {
+            padding: 15px;
+        }
+        .vehicle-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .vehicle-price {
+            color: #28a745;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
